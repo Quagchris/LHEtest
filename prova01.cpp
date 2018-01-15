@@ -34,8 +34,7 @@ int main(int argc, char** argv)
     //Print out the beam energies:
     cout << "Beam A: " << reader.heprup.EBMUP.first << " GeV, Beam B: "
          << reader.heprup.EBMUP.second << " GeV." << endl;
-              
-    //create output TFile 
+             
     TFile output("LHETree.root", "RECREATE");
     TTree* tree = new TTree("tree", "LHE events");
     
