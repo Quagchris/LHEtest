@@ -14,13 +14,13 @@ using namespace std;
 
 int main(int argc, char** argv)
 {
-    if (argc != 2)
+    if (argc != 3)
     {
-        cout << "Usage: " << argv[0] << " file.lhe" << endl;
+        cout << "Usage: " << argv[0] << " output.root file.lhe" << endl;
         return 1;
     }
     //Open a stream connected to an event file:
-    ifstream ifs(argv[1]);
+    ifstream ifs(argv[2]);
     
     //Create the Reader object:
     LHEF::Reader reader(ifs);
@@ -34,8 +34,8 @@ int main(int argc, char** argv)
     //Print out the beam energies:
     cout << "Beam A: " << reader.heprup.EBMUP.first << " GeV, Beam B: "
          << reader.heprup.EBMUP.second << " GeV." << endl;
-              
-    TFile output("LHETree.root", "RECREATE");
+    char* rootfile = argv[1];          
+    TFile output( rootfile, "RECREATE");
     TTree* tree = new TTree("tree", "LHE events");
     
     double lep_eta, lep_pt;
