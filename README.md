@@ -8,6 +8,5 @@ c++ -o prova01 prova01.cpp `root-config --cflags --glibs`
 ```
 To run the program:
 ```
-./prova01 file.lhe
+./prova01 output.root file.lhe
 ```
-The .root output file is named LHETree.root
