@@ -10,4 +10,4 @@ To run the program:
 ```
 ./prova01 output.root file.lhe
 ```
-A file .lhe is given in test.lhe.tar.xz
+A .lhe file is given in test.lhe.tar.xz
