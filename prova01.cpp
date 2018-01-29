@@ -28,14 +28,20 @@ int main(int argc, char** argv)
     double n_eta, n_pt;
     double vbs1_eta, vbs1_pt, vbs2_eta, vbs2_pt;
     double vjet1_eta, vjet1_pt, vjet2_eta, vjet2_pt;
-    double deltaeta_vbs, mjj_vbs, mjj_vjet;
+    double deltaeta_vbs, mjj_vbs, mjj_vjet, abs_deta;
+    double eta_mag, eta_min;
     double mww;
     double zepp_l, zepp_q1, zepp_q2;
     
-    TH1F *zepp_lep = new TH1F("zepp_lep", "zepp_l", 100, -1., 1.);
-    TH1F *zepp_qu1 = new TH1F("zepp_qu1", "zepp_q1", 100, -1., 1.);
-    TH1F *zepp_qu2 = new TH1F("zepp_qu2", "zepp_q2", 100, -1., 1.);
+    tree->Branch("deltaeta_vbs", &deltaeta_vbs);
+    tree->Branch("abs_deta", &abs_deta);
+    tree->Branch("mjj_vbs", &mjj_vbs);
+    tree->Branch("zepp_l", &zepp_l);
+    tree->Branch("zepp_q1", &zepp_q1);
+    tree->Branch("zepp_q2", &zepp_q2);
     
+    tree->Branch("eta_mag", &eta_mag);
+    tree->Branch("eta_min", &eta_min);
     tree->Branch("lep_eta", &lep_eta);
     tree->Branch("lep_pt", &lep_pt);
     tree->Branch("n_eta", &n_eta);
@@ -48,8 +54,6 @@ int main(int argc, char** argv)
     tree->Branch("vjet1_pt", &vjet1_pt);
     tree->Branch("vjet2_eta", &vjet2_eta);
     tree->Branch("vjet2_pt", &vjet2_pt);
-    tree->Branch("deltaeta_vbs", &deltaeta_vbs);
-    tree->Branch("mjj_vbs", &mjj_vbs);
     tree->Branch("mjj_vjet", &mjj_vjet);
     tree->Branch("mww", &mww);
     
@@ -157,19 +161,11 @@ int main(int argc, char** argv)
                     mjj = (p1 + p2).M();
                     if(mjj > mjj_max)
                     {
-                        if(p1.Eta() > p2.Eta())
-                        {
-                            jet_vbs1 = p1;
-                            jet_vbs2 = p2;
-                        }
-                        else
-                        {
-                            jet_vbs1 = p2;
-                            jet_vbs2 = p1;
-                        }
-                        mjj_max = mjj;
-                        v1 = jets[i];
-                        v2 = jets[j];
+                       jet_vbs1 = p1;
+                       jet_vbs2 = p2;
+                       mjj_max = mjj;
+                       v1 = jets[i];
+                       v2 = jets[j];
                     }
                 }
             }
@@ -191,15 +187,24 @@ int main(int argc, char** argv)
             mjj_vbs = (jet_vbs1 + jet_vbs2).M();
             mjj_vjet = (jet_w1 + jet_w2).M();
             
+            if (vbs1_eta < vbs2_eta)
+            {
+                eta_mag = vbs2_eta;
+                eta_min = vbs1_eta;
+            }
+            else
+            {
+                eta_mag = vbs1_eta;
+                eta_min = vbs2_eta;
+            }
+           
             //Zeppenfeld var
             double deta = abs(deltaeta_vbs);
             double meta = .5*(vbs1_eta + vbs2_eta);
             zepp_l = (lep_eta - meta)/deta;
+            abs_deta = deta;
             zepp_q1 = (vjet1_eta - meta)/deta;
             zepp_q2 = (vjet2_eta - meta)/deta;
-            zepp_lep->Fill(zepp_l);
-            zepp_qu1->Fill(zepp_q1);
-            zepp_qu2->Fill(zepp_q2);
             
             // Mass of the two W
             mww = (jet_w1 + jet_w2 + lep_mom + nu_mom).M();
@@ -213,9 +218,6 @@ int main(int argc, char** argv)
         
         ifs.close();
     }//end of loop over files
-    zepp_lep->Write();
-    zepp_qu1->Write();
-    zepp_qu2->Write();
     tree->Write();
     output.Close();
     
