@@ -29,7 +29,6 @@ int main(int argc, char** argv)
     double vbs1_eta, vbs1_pt, vbs2_eta, vbs2_pt;
     double vjet1_eta, vjet1_pt, vjet2_eta, vjet2_pt;
     double deltaeta_vbs, mjj_vbs, mjj_vjet, abs_deta;
-    double eta_mag, eta_min;
     double mww;
     double zepp_l, zepp_q1, zepp_q2;
     
@@ -40,8 +39,6 @@ int main(int argc, char** argv)
     tree->Branch("zepp_q1", &zepp_q1);
     tree->Branch("zepp_q2", &zepp_q2);
     
-    tree->Branch("eta_mag", &eta_mag);
-    tree->Branch("eta_min", &eta_min);
     tree->Branch("lep_eta", &lep_eta);
     tree->Branch("lep_pt", &lep_pt);
     tree->Branch("n_eta", &n_eta);
@@ -186,17 +183,6 @@ int main(int argc, char** argv)
             deltaeta_vbs = vbs1_eta - vbs2_eta;
             mjj_vbs = (jet_vbs1 + jet_vbs2).M();
             mjj_vjet = (jet_w1 + jet_w2).M();
-            
-            if (vbs1_eta < vbs2_eta)
-            {
-                eta_mag = vbs2_eta;
-                eta_min = vbs1_eta;
-            }
-            else
-            {
-                eta_mag = vbs1_eta;
-                eta_min = vbs2_eta;
-            }
            
             //Zeppenfeld var
             double deta = abs(deltaeta_vbs);
