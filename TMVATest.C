@@ -1,32 +1,19 @@
-#include <iostream>
 #include <cstdlib>
-#include <fstream>
+#include <iostream>
+#include <map>
 #include <string>
-#include <sstream>
-#include <vector>
-#include <algorithm>
-#include <functional>
-#include <memory>
-
+#include "TChain.h"
 #include "TFile.h"
 #include "TTree.h"
-#include "TChain.h"
-#include "TChainElement.h"
-#include "TH1F.h"
-#include "TH2F.h"
 #include "TString.h"
-#include "TMath.h"
+#include "TObjString.h"
 #include "TSystem.h"
 #include "TROOT.h"
-#include "TNtuple.h"
-
-#include "TMVA/MsgLogger.h"
-#include "TMVA/Config.h"
 #include "TMVA/Factory.h"
-#include "TMVA/Reader.h"
 #include "TMVA/DataLoader.h"
 #include "TMVA/Tools.h"
 #include "TMVA/TMVAGui.h"
+#include <TMVA/Config.h>
 
 using namespace std;
 
@@ -34,30 +21,26 @@ int TMVATest()
 {
     
     TMVA::Tools::Instance();
-    
-    //output file
-    TString outfileName = "TMVAtry.root";
-    TFile* outputFile = TFile::Open( outfileName, "RECREATE" );  
-    
+     
     //SigTree
-    TFile* Sig_TFile = TFile::Open("./output_quaggio_ewk_20M.root");
-    TTree* Sig_Tree = (TTree*)Sig_TFile->Get("tree");
+    TString sname = "./output_quaggio_ewk_20M.root";
+    TFile* Sig_TFile = TFile::Open( sname );
     
     //BkgTree
-    TFile* Bkg_TFile = TFile::Open("./output_quaggio_qcd_1M.root");
+    TString bname = "./output_quaggio_qcd_1M.root";
+    TFile* Bkg_TFile = TFile::Open( bname );
+    
+    TTree* Sig_Tree = (TTree*)Sig_TFile->Get("tree");
     TTree* Bkg_Tree = (TTree*)Bkg_TFile->Get("tree");
+   
+    //output file
+    TString outfileName( "TMVAtry.root" );
+    TFile* outputFile = TFile::Open( outfileName, "RECREATE" );  
     
-    TMVA::Factory* TMVAtest = new TMVA::Factory(
-        "BlaBlaPROVAA", 
-        outputFile,
-        "!V:!Silent:Color:DrawProgressBar:Transformations=I;D;P;G,D:AnalysisType=Classification"
-        );
-
-    TMVA::DataLoader *dataloader=new TMVA::DataLoader("dataset");
-    
-    //Add Sig and Bkg trees
-    dataloader->AddSignalTree(Sig_Tree, 1.);
-    dataloader->AddBackgroundTree(Bkg_Tree, 1.);
+   
+    TMVA::Factory *TMVAtest = new TMVA::Factory( "TMVAClassificationTest", outputFile,
+                                               "!V:!Silent:Color:DrawProgressBar:Transformations=I;D;P;G,D:AnalysisType=Classification" );
+    TMVA::DataLoader *dataloader=new TMVA::DataLoader("datasetTest");
 
     //Add trainingVariables
     dataloader->AddVariable("mjj_vbs", 'F');
@@ -65,11 +48,16 @@ int TMVATest()
     dataloader->AddVariable("zepp_l", 'F');
     dataloader->AddVariable("zepp_q1", 'F');
     dataloader->AddVariable("zepp_q2", 'F');
-    
-    //Add SpectatorVariables
-    dataloader->AddSpectator ("mjj_vjet", 'F');
-    dataloader->AddSpectator ("mww", 'F');
-    
+   
+    //Add Sig and Bkg trees
+    dataloader->AddSignalTree(Sig_Tree, 1.);
+    dataloader->AddBackgroundTree(Bkg_Tree, 1.);
+
+     
+//     //Add SpectatorVariables
+//     dataloader->AddSpectator ("mjj_vjet", 'F');
+//     dataloader->AddSpectator ("mww", 'F');
+   
     TCut mycuts = "";
     TCut mycutb = "";
     
@@ -92,11 +80,11 @@ int TMVATest()
         NTrees, BoostType.c_str (), AdaBoostBeta, PruneMethod.c_str (), PruneStrength, MaxDepth, SeparationType.c_str ()) ;
 
 //     string BDTname = string ("BDT_") + MVAname ;
-    TMVAtest->BookMethod(dataloader, TMVA::Types::kBDT, "BDT_prova", Option.Data()) ;
+    TMVAtest->BookMethod(dataloader, TMVA::Types::kBDT, "BDT", Option.Data()) ;
 
     // adding a BDTG
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
-
+/*
     float GradBaggingFraction = 0.6 ; 
     NTrees              = 100 ; 
     optimizeMethod      = false ; 
@@ -110,19 +98,19 @@ int TMVATest()
         NTrees, GradBaggingFraction, PruneMethod.c_str (), PruneStrength, MaxDepth, SeparationType.c_str (), Shrinkage) ;
 
 //     string BDTGname = string ("BDTG_") + MVAname ;
-    TMVAtest->BookMethod(dataloader, TMVA::Types::kBDT,"BDTG_prova", Option.Data()) ;
+    TMVAtest->BookMethod(dataloader, TMVA::Types::kBDT,"BDTG_prova", Option.Data()) ;*/
 
     // start the training
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
     
-    TMVAtest->TrainAllMethods () ;
-    TMVAtest->TestAllMethods () ;
-    TMVAtest->EvaluateAllMethods () ;
+    TMVAtest->TrainAllMethods();
+    TMVAtest->TestAllMethods();
+    TMVAtest->EvaluateAllMethods();
     
     outputFile->Close();
     
-    delete TMVAtest ;
-    delete outputFile ;
+    delete TMVAtest;
+    delete dataloader;
 
 //     cout << "\n-====-====-====-====-====-====-====-====-====-====-====-====-====-\n\n" ;
 //     cout << "Name tag of the weights file: " << BDTname << "\n" ;  
