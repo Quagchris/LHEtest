@@ -32,6 +32,10 @@ int main(int argc, char** argv)
     double mww;
     double zepp_l, zepp_q1, zepp_q2;
     
+    TH1F *q1 = new TH1F("q1", "PGID of jet1", 80, -10, 10);
+    TH1F *q2 = new TH1F("q2", "PGID of jet2", 80, -10, 10);    
+    TH1F* l1 = new TH1F("l1", "PDGID of lepton", 160, -20, 20);
+    
     tree->Branch("deltaeta_vbs", &deltaeta_vbs);
     tree->Branch("abs_deta", &abs_deta);
     tree->Branch("mjj_vbs", &mjj_vbs);
@@ -116,6 +120,7 @@ int main(int argc, char** argv)
                         lep_mom = momentum;
                         lep_eta = momentum.Eta();
                         lep_pt = momentum.Pt();
+                        l1->Fill(ID);
                     }
                     
                     if ( abs(ID) == 12 || abs(ID) == 14 )
@@ -172,6 +177,9 @@ int main(int argc, char** argv)
             jet_w1 = momenta[jets[0]];
             jet_w2 = momenta[jets[1]];
             
+            q1->Fill(reader.hepeup.IDUP.at(jets[0]));
+            q2->Fill(reader.hepeup.IDUP.at(jets[1]));
+            
             vbs1_pt = jet_vbs1.Pt();
             vbs1_eta = jet_vbs1.Eta();
             vbs2_pt = jet_vbs2.Pt();
@@ -204,6 +212,9 @@ int main(int argc, char** argv)
         
         ifs.close();
     }//end of loop over files
+    l1->Write();
+    q1->Write();
+    q2->Write();
     tree->Write();
     output.Close();
     
