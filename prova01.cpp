@@ -177,41 +177,45 @@ int main(int argc, char** argv)
             jet_w1 = momenta[jets[0]];
             jet_w2 = momenta[jets[1]];
             
-            q1->Fill(reader.hepeup.IDUP.at(jets[0]));
-            q2->Fill(reader.hepeup.IDUP.at(jets[1]));
-            
-            vbs1_pt = jet_vbs1.Pt();
-            vbs1_eta = jet_vbs1.Eta();
-            vbs2_pt = jet_vbs2.Pt();
-            vbs2_eta = jet_vbs2.Eta();
-            vjet1_pt = jet_w1.Pt();
-            vjet1_eta = jet_w1.Eta();
-            vjet2_pt = jet_w2.Pt();
-            vjet2_eta = jet_w2.Eta();
-            deltaeta_vbs = vbs1_eta - vbs2_eta;
-            mjj_vbs = (jet_vbs1 + jet_vbs2).M();
-            mjj_vjet = (jet_w1 + jet_w2).M();
-           
-            //Zeppenfeld var
-            double deta = abs(deltaeta_vbs);
-            double meta = .5*(vbs1_eta + vbs2_eta);
-            zepp_l = (lep_eta - meta)/deta;
-            abs_deta = deta;
-            zepp_q1 = (vjet1_eta - meta)/deta;
-            zepp_q2 = (vjet2_eta - meta)/deta;
-            
-            // Mass of the two W
-            mww = (jet_w1 + jet_w2 + lep_mom + nu_mom).M();
+            if ((jet_w1 + jet_w2).M() > 75 && (jet_w1 + jet_w2).M() < 85 && (jet_vbs1 + jet_vbs2).M() > 130)
+            {
+                q1->Fill(reader.hepeup.IDUP.at(jets[0]));
+                q2->Fill(reader.hepeup.IDUP.at(jets[1]));
 
-//             cout << "Mjj vbs jet: " << mjj_vbs << " | " 
-//                 << "DeltaEta vbs jet: " << deltaeta_vbs << endl
-//                 << "------------------------------------------------" << endl;
-             
-            tree->Fill();
+                vbs1_pt = jet_vbs1.Pt();
+                vbs1_eta = jet_vbs1.Eta();
+                vbs2_pt = jet_vbs2.Pt();
+                vbs2_eta = jet_vbs2.Eta();
+                vjet1_pt = jet_w1.Pt();
+                vjet1_eta = jet_w1.Eta();
+                vjet2_pt = jet_w2.Pt();
+                vjet2_eta = jet_w2.Eta();
+                deltaeta_vbs = vbs1_eta - vbs2_eta;
+                mjj_vbs = (jet_vbs1 + jet_vbs2).M();
+                mjj_vjet = (jet_w1 + jet_w2).M();
+
+                //Zeppenfeld var
+                double deta = abs(deltaeta_vbs);
+                double meta = .5*(vbs1_eta + vbs2_eta);
+                zepp_l = (lep_eta - meta)/deta;
+                abs_deta = deta;
+                zepp_q1 = (vjet1_eta - meta)/deta;
+                zepp_q2 = (vjet2_eta - meta)/deta;
+
+                // Mass of the two W
+                mww = (jet_w1 + jet_w2 + lep_mom + nu_mom).M();
+
+    //             cout << "Mjj vbs jet: " << mjj_vbs << " | " 
+    //                 << "DeltaEta vbs jet: " << deltaeta_vbs << endl
+    //                 << "------------------------------------------------" << endl;
+
+                tree->Fill();
+             }
         }//end of loop over events
         
         ifs.close();
     }//end of loop over files
+    
     l1->Write();
     q1->Write();
     q2->Write();
