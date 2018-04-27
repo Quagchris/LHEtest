@@ -1,4 +1,4 @@
-// c++ -o prova01 prova01.cpp `root-config --cflags --glibs`
+// c++ -o LHEToTree LHEToTree.cpp `root-config --cflags --glibs`
 
 #include "LHEF.h"
 #include "TH1.h"
