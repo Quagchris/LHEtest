@@ -177,6 +177,7 @@ int main(int argc, char** argv)
             jet_w1 = momenta[jets[0]];
             jet_w2 = momenta[jets[1]];
             
+            //selection requirements for each event
             if ((jet_w1 + jet_w2).M() > 75 && (jet_w1 + jet_w2).M() < 85 && (jet_vbs1 + jet_vbs2).M() > 130)
             {
                 q1->Fill(reader.hepeup.IDUP.at(jets[0]));
