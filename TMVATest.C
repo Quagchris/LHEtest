@@ -1,19 +1,16 @@
 #include <cstdlib>
 #include <iostream>
-#include <map>
 #include <string>
-#include "TChain.h"
 #include "TFile.h"
 #include "TTree.h"
 #include "TString.h"
-#include "TObjString.h"
-#include "TSystem.h"
-#include "TROOT.h"
 #include "TMVA/Factory.h"
 #include "TMVA/DataLoader.h"
 #include "TMVA/Tools.h"
 #include "TMVA/TMVAGui.h"
 #include <TMVA/Config.h>
+#include <fstream>
+#include <sstream>
 
 using namespace std;
 
@@ -21,84 +18,90 @@ int TMVATest()
 {
     
     TMVA::Tools::Instance();
-     
+    
+    
     //SigTree
-    TString sname = "./output_quaggio_ewk_20M.root";
+    TString sname = "./treeS_cut.root";
     TFile* Sig_TFile = TFile::Open( sname );
     
     //BkgTree
-    TString bname = "./output_quaggio_qcd_1M.root";
+    TString bname = "./treeB_cut.root";
     TFile* Bkg_TFile = TFile::Open( bname );
     
-    TTree* Sig_Tree = (TTree*)Sig_TFile->Get("tree");
-    TTree* Bkg_Tree = (TTree*)Bkg_TFile->Get("tree");
-   
-    //output file
-    TString outfileName( "TMVAtry.root" );
-    TFile* outputFile = TFile::Open( outfileName, "RECREATE" );  
+    TTree* Sig_Tree = (TTree*)Sig_TFile->Get("treeS_cut");
+    TTree* Bkg_Tree = (TTree*)Bkg_TFile->Get("treeB_cut");
     
-   
+    //output file and .txt config file
+    stringstream ss;
+    ss << "TMVA.root";
+    TString outfileName(ss.str());
+    TFile* outputFile = TFile::Open( outfileName , "RECREATE" );  
+    
+    ss << "_config.txt";
+    
+    ofstream out(ss.str());
+    
     TMVA::Factory *TMVAtest = new TMVA::Factory( "TMVAClassificationTest", outputFile,
-                                               "!V:!Silent:Color:DrawProgressBar:Transformations=I;D;P;G,D:AnalysisType=Classification" );
+                                               "!V:!Silent:Color:DrawProgressBar:Transformations=I:AnalysisType=Classification" );
     TMVA::DataLoader *dataloader=new TMVA::DataLoader("datasetTest");
 
     //Add trainingVariables
     dataloader->AddVariable("mjj_vbs", 'F');
-    dataloader->AddVariable("deltaeta_vbs", 'F');
+    dataloader->AddVariable("abs_deta", 'F');
     dataloader->AddVariable("zepp_l", 'F');
     dataloader->AddVariable("zepp_q1", 'F');
     dataloader->AddVariable("zepp_q2", 'F');
-   
+    
     //Add Sig and Bkg trees
     dataloader->AddSignalTree(Sig_Tree, 1.);
     dataloader->AddBackgroundTree(Bkg_Tree, 1.);
 
      
-//     //Add SpectatorVariables
-//     dataloader->AddSpectator ("mjj_vjet", 'F');
-//     dataloader->AddSpectator ("mww", 'F');
+    //Add SpectatorVariables
+//     dataloader->AddSpectator ("prod_eta", 'F');
    
     TCut mycuts = "";
     TCut mycutb = "";
     
     dataloader->PrepareTrainingAndTestTree( mycuts, mycutb,
-                                        "nTrain_Signal=1000:nTrain_Background=1000:SplitMode=Random:NormMode=NumEvents:!V" );
+                                        "nTrain_Signal=50000:nTrain_Background=50000:SplitMode=Random:NormMode=NumEvents:!V" );
     
     // adding a BDT
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
-    
-    int    NTrees         = 800 ; 
+    int    NTrees         = 10000 ;
     bool   optimizeMethod = false ; 
     string BoostType      = "AdaBoost" ; 
     float  AdaBoostBeta   = 0.5 ; 
     string PruneMethod    = "NoPruning" ; 
-    int    PruneStrength  = 5 ; 
-    int    MaxDepth       = 5 ; 
+    int    PruneStrength  = 1 ; 
+    int    MaxDepth       = 6 ; 
     string SeparationType = "GiniIndex" ;
-
-    TString Option = Form ("!H:!V:CreateMVAPdfs:NTrees=%d:BoostType=%s:AdaBoostBeta=%f:PruneMethod=%s:PruneStrength=%d:MaxDepth=%d:SeparationType=%s:Shrinkage=0.1:UseYesNoLeaf=F:MinNodeSize=2:nCuts=200", 
+    
+    out << "--------------------BDT--------------------" << endl;
+    out << "NTrees:         " << NTrees << endl; 
+    out << "optimizeMethod: " << "false" << endl;
+    out << "BoostType:      " << BoostType << endl;
+    out << "AdaBoostBeta:   " << AdaBoostBeta << endl;
+    out << "PruneMethod:    " << PruneMethod << endl;
+    out << "PruneStrength:  " << PruneStrength << endl;
+    out << "MaxDepth:       " << MaxDepth << endl;
+    out << "SeparationType: " << SeparationType << endl;
+    out << "\n";
+    
+    //Booking options for the BDT
+    TString Option = Form ("!H:!V:CreateMVAPdfs:NTrees=%d:BoostType=%s:AdaBoostBeta=%f:PruneMethod=%s:PruneStrength=%d:MaxDepth=%d:SeparationType=%s:Shrinkage=0.1:UseYesNoLeaf=F:MinNodeSize=2:nCuts=400", 
         NTrees, BoostType.c_str (), AdaBoostBeta, PruneMethod.c_str (), PruneStrength, MaxDepth, SeparationType.c_str ()) ;
-
-//     string BDTname = string ("BDT_") + MVAname ;
+            
     TMVAtest->BookMethod(dataloader, TMVA::Types::kBDT, "BDT", Option.Data()) ;
-
-    // adding a BDTG
+    
+    // adding a Rectangular Cut
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
-/*
-    float GradBaggingFraction = 0.6 ; 
-    NTrees              = 100 ; 
-    optimizeMethod      = false ; 
-    PruneMethod         = "NoPruning" ; 
-    PruneStrength       = 5 ; 
-    MaxDepth            = 2 ; 
-    SeparationType      = "GiniIndex" ;
-    float Shrinkage     = 0.3;
 
-    Option = Form ("CreateMVAPdfs:NTrees=%d:BoostType=Grad:UseBaggedGrad:BaggedSampleFraction=%f:PruneMethod=%s:PruneStrength=%d:MaxDepth=%d:SeparationType=%s:Shrinkage=%f:UseYesNoLeaf=F:nCuts=600",
-        NTrees, GradBaggingFraction, PruneMethod.c_str (), PruneStrength, MaxDepth, SeparationType.c_str (), Shrinkage) ;
-
-//     string BDTGname = string ("BDTG_") + MVAname ;
-    TMVAtest->BookMethod(dataloader, TMVA::Types::kBDT,"BDTG_prova", Option.Data()) ;*/
+    out << "--------------------CUT--------------------" << endl;
+    out << "FitMethod:  " << "GA" << endl;
+    out << "VarProp:    " << "FSmart" << endl;
+     TMVAtest->BookMethod( dataloader, TMVA::Types::kCuts, "Cuts",
+                            "!H:!V:CreateMVAPdfs:FitMethod=GA:EffSel:VarProp=FSmart" );
 
     // start the training
     // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
@@ -112,9 +115,6 @@ int TMVATest()
     delete TMVAtest;
     delete dataloader;
 
-//     cout << "\n-====-====-====-====-====-====-====-====-====-====-====-====-====-\n\n" ;
-//     cout << "Name tag of the weights file: " << BDTname << "\n" ;  
-    if (!gROOT->IsBatch()) TMVA::TMVAGui( outfileName );
     return 0 ;
 }
 
